@@ -1,0 +1,7 @@
+.idea
+.backups
+.mappings
+.queries
+.esctl.yaml
+.config.yaml
+esctl
