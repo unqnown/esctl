@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/olivere/elastic/v7"
-	"github.com/unqnown/esctl/config"
+	"github.com/unqnown/esctl/internal/app"
 	"github.com/unqnown/esctl/pkg/dump"
 )
 
@@ -14,7 +14,7 @@ type Client struct {
 	*elastic.Client
 }
 
-func New(cluster config.Cluster, usr config.User, opts ...elastic.ClientOptionFunc) (*Client, error) {
+func New(cluster app.Cluster, usr app.User, opts ...elastic.ClientOptionFunc) (*Client, error) {
 	apply := append(opts, elastic.SetURL(cluster.Servers...))
 	if !usr.Nil {
 		apply = append(apply, elastic.SetBasicAuth(usr.Name, usr.Password))

@@ -1,15 +1,16 @@
 package main
 
 import (
-	"github.com/unqnown/esctl/app"
-	"github.com/unqnown/esctl/pkg/check"
 	"log"
-)
 
-func main() {
-	check.Fatal(app.Run())
-}
+	"github.com/unqnown/esctl/cmd"
+	"github.com/unqnown/esctl/pkg/check"
+)
 
 func init() {
 	log.SetFlags(0)
+}
+
+func main() {
+	check.Fatal(cmd.Run())
 }

@@ -1,6 +1,16 @@
 ### esctl
 
-esctl is CLI tool for Elasticsearch cluster managing.
+esctl is cli tool for Elasticsearch cluster managing.
+
+![esctl](assets/esctl.png)
+
+### features
+
+- expressive and intuitive syntax
+- formatted and colorized terminal output
+- components high-level information
+- indices management
+- content dumping/restoring
 
 ### installation
 
@@ -10,7 +20,11 @@ Standard `go install`:
 go install github.com/unqnown/esctl
 ```
 
-### configuration
+### quick start
+
+`esctl` requires configuration file to connect to a cluster.
+However, it is a waste of time to create configuration file from scratch.
+Therefore it's recommended to use the `init` command which will create it interactively.
 
 To start using `esctl` immediately with default configuration run:
 
@@ -22,6 +36,7 @@ Default configuration will be added to your `$HOME/.esctl` directory.
 You are able to override config location with `$ESCTLCONFIG` env variable.
 
 ```yaml
+workdir: ~/.esctl/
 clusters:
   localhost:
     servers:

@@ -7,3 +7,10 @@ var Health = map[string]tablewriter.Colors{
 	"yellow": {tablewriter.FgYellowColor},
 	"red":    {tablewriter.FgRedColor},
 }
+
+var State = map[string]tablewriter.Colors{
+	"STARTED":      {tablewriter.FgGreenColor},
+	"INITIALIZING": {tablewriter.FgYellowColor},
+	"RELOCATING":   {tablewriter.FgYellowColor},
+	"UNASSIGNED":   {tablewriter.FgRedColor},
+}

@@ -1,7 +1,6 @@
 .idea
-.backups
-.mappings
-.queries
-.esctl.yaml
+.backup
+.mapping
+.query
 .config.yaml
 esctl

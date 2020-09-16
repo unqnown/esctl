@@ -1,7 +1,7 @@
 package ctl
 
 import (
-	"github.com/unqnown/esctl/config"
+	"github.com/unqnown/esctl/internal/app"
 	"github.com/unqnown/esctl/pkg/check"
 	"github.com/unqnown/esctl/pkg/client"
 	"github.com/urfave/cli"
@@ -9,11 +9,11 @@ import (
 
 type ActionFunc = func(*cli.Context)
 
-type CommandFunc func(conf config.Config, cli *client.Client, ctx *cli.Context) error
+type CommandFunc func(conf app.Config, cli *client.Client, ctx *cli.Context) error
 
 func NewAction(cmd CommandFunc) ActionFunc {
 	return func(c *cli.Context) {
-		conf, err := config.Open(c.GlobalString("config"))
+		conf, err := app.Open(c.GlobalString("config"))
 		check.Fatalf(err, "open config: %v", err)
 
 		err = conf.SetContext(c.GlobalString("context"))
@@ -29,7 +29,7 @@ func NewAction(cmd CommandFunc) ActionFunc {
 	}
 }
 
-func Call(cmd CommandFunc, conf config.Config, conn *client.Client) ActionFunc {
+func Call(cmd CommandFunc, conf app.Config, conn *client.Client) ActionFunc {
 	return func(ctx *cli.Context) {
 		check.Fatal(cmd(conf, conn, ctx))
 	}

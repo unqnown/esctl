@@ -14,9 +14,9 @@ create: install
 	esctl create $(index) -b .mapping/$(index).json
 
 dump: install
-	esctl dump $(index) -d .dump/$(index).json
+	esctl dump $(index) -d .backup/$(index).json
 
 restore: install
 	esctl delete $(index)
 	esctl create $(index) -b .mapping/$(index).json
-	esctl restore $(index) -d .dump/$(index).json
+	esctl restore $(index) -d .backup/$(index).json
