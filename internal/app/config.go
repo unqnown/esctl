@@ -21,10 +21,10 @@ const (
 	QueryDir   = ".query"
 )
 
-func NewConfig(ver semver.Version, workd string) Config {
+func NewConfig(ver semver.Version, home string) Config {
 	return Config{
 		Version: ver,
-		Workdir: workd,
+		Home:    home,
 		Users:   map[string]User{},
 		Clusters: map[string]Cluster{
 			"localhost": {
@@ -45,7 +45,7 @@ type Settings struct{}
 type Config struct {
 	Version semver.Version `yaml:"version"`
 
-	Workdir  string   `yaml:"workdir"`
+	Home     string   `yaml:"home"`
 	Settings Settings `yaml:"settings,omitempty"`
 
 	Users    Users              `yaml:"users,omitempty"`

@@ -27,6 +27,7 @@ build: ## Build a version
 clean: ## Remove temporary files
 	go clean
 
+.PHONY: install
 install: ## Install binary
 	go install ./...
 

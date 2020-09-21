@@ -37,7 +37,7 @@ You are able to override config location with `$ESCTLCONFIG` env variable.
 
 ```yaml
 version: v0.1.0
-workdir: ~/.esctl/
+home: ~/.esctl/
 clusters:
   localhost:
     servers:
@@ -45,6 +45,5 @@ clusters:
 contexts:
   default:
     cluster: localhost
-    location: default
 context: default
 ```

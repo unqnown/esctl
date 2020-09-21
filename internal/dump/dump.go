@@ -63,7 +63,7 @@ func dump(conf app.Config, conn *client.Client, c *cli.Context) error {
 
 	file := c.String("dump")
 	if file == "" {
-		file = filepath.Join(conf.Workdir, app.BackupDir, fmt.Sprintf("%s.json", time.Now().Format("2006-01-02T15:04:05")))
+		file = filepath.Join(conf.Home, app.BackupDir, fmt.Sprintf("%s.json", time.Now().Format("2006-01-02T15:04:05")))
 	}
 
 	f, err := newDumpFile(file)
