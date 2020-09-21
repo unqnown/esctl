@@ -87,7 +87,6 @@ func add(c *cli.Context) {
 	if exists {
 		fmt.Fprintf(&w, "context %q updated\n", ctx)
 	} else {
-		context.Location = "default"
 		fmt.Fprintf(&w, "context %q added\n", ctx)
 	}
 

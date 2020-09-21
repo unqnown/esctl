@@ -1,16 +1,19 @@
 package restore
 
 import (
+	"encoding/json"
+	"errors"
+	"io"
+	"os"
+
 	"github.com/unqnown/esctl/internal/app"
+	"github.com/unqnown/esctl/pkg/backup"
 	"github.com/unqnown/esctl/pkg/bar"
 	"github.com/unqnown/esctl/pkg/check"
 	"github.com/unqnown/esctl/pkg/client"
 	"github.com/unqnown/esctl/pkg/ctl"
-	"github.com/unqnown/esctl/pkg/dump"
 	"github.com/urfave/cli"
 	"github.com/vbauerster/mpb"
-	"io"
-	"os"
 )
 
 var Command = cli.Command{
@@ -28,11 +31,6 @@ var Command = cli.Command{
 			Required: true,
 			Usage:    "Dump `FILE`",
 		},
-		cli.IntFlag{
-			Name:  "lpr",
-			Usage: "Documents limit per request",
-			Value: 1000,
-		},
 	},
 }
 
@@ -44,31 +42,28 @@ func restore(_ app.Config, conn *client.Client, c *cli.Context) error {
 	check.Fatalf(err, "open dump file: %v", err)
 	defer r.Close()
 
-	docs := make([]dump.Doc, c.Int("lpr"))
+	dec := json.NewDecoder(r)
 
 	index, present := c.Args().First(), c.Args().Present()
 
-write:
 	for {
-		n, err := r.Read(docs)
-		for _, doc := range docs[:n] {
-			if present {
-				doc.Index = index
-			}
-			processor.Save(doc)
-		}
+		var doc backup.Document
 
-		switch err {
-		case nil:
-			// go ahead
-		case io.EOF:
-			break write
-		default:
+		if err := dec.Decode(&doc); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
 			check.Fatalf(err, "read dump: %v", err)
 		}
+
+		if present {
+			doc.Index = index
+		}
+
+		processor.Save(doc)
 	}
 
-	err = processor.Flush()
+	err = processor.Close()
 	check.Fatalf(err, "flush save tasks: %v", err)
 
 	restoring.SetTotal(0, true)
@@ -78,7 +73,7 @@ write:
 	return nil
 }
 
-func factory(file string) (dump.ReadCloser, *mpb.Bar, func(), error) {
+func factory(file string) (io.ReadCloser, *mpb.Bar, func(), error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, nil, nil, err
@@ -88,5 +83,6 @@ func factory(file string) (dump.ReadCloser, *mpb.Bar, func(), error) {
 		return nil, nil, nil, err
 	}
 	b, wait := bar.Percent(s.Size(), "restoring")
-	return dump.NewReadCloser(b.ProxyReader(f)), b, wait, nil
+
+	return b.ProxyReader(f), b, wait, nil
 }

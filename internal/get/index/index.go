@@ -75,6 +75,7 @@ func indices(conf app.Config, conn *client.Client, c *cli.Context) error {
 
 	if len(cat) == 0 {
 		log.Printf("no indices found")
+
 		return nil
 	}
 
@@ -115,5 +116,6 @@ func indices(conf app.Config, conn *client.Client, c *cli.Context) error {
 		)
 	}
 	t.Render()
+
 	return nil
 }

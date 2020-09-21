@@ -1,0 +1,40 @@
+run:
+  deadline: 5m
+  tests: true
+  skip-dirs:
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  govet:
+    check-shadowing: false
+  golint:
+    min-confidence: 0
+  maligned:
+    suggest-new: true
+  goconst:
+    min-len: 2
+    min-occurrences: 3
+  lll:
+    line-length: 120
+  dupl:
+    threshold: 100
+  unparam:
+    check-exported: false
+
+linters:
+  enable-all: true
+  disable:
+    - maligned
+    - godox
+    - funlen
+    - wsl
+    - lll
+    - gomnd
+    - gochecknoglobals
+
+issues:
+  exclude:
+    - should have a package comment
+    - which.*use
+    - can be fmt.Stringer

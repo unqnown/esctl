@@ -2,7 +2,6 @@ package replace
 
 import (
 	"context"
-	"github.com/unqnown/esctl/pkg/ctl"
 	"io/ioutil"
 	"log"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/unqnown/esctl/pkg/bar"
 	"github.com/unqnown/esctl/pkg/check"
 	"github.com/unqnown/esctl/pkg/client"
+	"github.com/unqnown/esctl/pkg/ctl"
 	"github.com/urfave/cli"
 )
 
@@ -87,6 +87,7 @@ func replace(_ app.Config, conn *client.Client, c *cli.Context) error {
 					reindexed, _ := conn.CatCount().Index(by).Do(context.Background())
 					if len(reindexed) == 0 {
 						reindexing.SetTotal(int64(prev), true)
+
 						break watch
 					}
 					reindexing.SetTotal(int64(reindexed[0].Count), true)
@@ -106,10 +107,18 @@ func replace(_ app.Config, conn *client.Client, c *cli.Context) error {
 		wait()
 	}
 
-	_, err := conn.Alias().
+	replace := conn.Alias().
 		Add(by, index).
-		Action(elastic.NewAliasRemoveIndexAction(index)).
-		Do(context.Background())
+		Action(elastic.NewAliasRemoveIndexAction(index))
+
+	aliases, err := conn.Aliases().Index(index).Do(context.Background())
+	check.Fatalf(err, "get %s index aliases: %v", index, err)
+
+	for _, prevalias := range aliases.Indices[index].Aliases {
+		replace.Add(by, prevalias.AliasName)
+	}
+
+	_, err = replace.Do(context.Background())
 	check.Fatal(err)
 
 	log.Printf("%q replaced by %q", index, by)

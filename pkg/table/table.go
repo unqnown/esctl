@@ -22,5 +22,6 @@ func New(header ...string) *Table {
 	table.SetBorder(false)
 	table.SetTablePadding("\t") // pad with tabs
 	table.SetNoWhiteSpace(true)
+
 	return &Table{Table: table}
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/unqnown/esctl/internal/dump"
 	"github.com/unqnown/esctl/internal/get"
 	"github.com/unqnown/esctl/internal/open"
+	"github.com/unqnown/esctl/internal/refresh"
 	"github.com/unqnown/esctl/internal/reindex"
 	"github.com/unqnown/esctl/internal/replace"
 	"github.com/unqnown/esctl/internal/reroute"
@@ -21,10 +22,11 @@ import (
 	"github.com/unqnown/esctl/internal/top"
 	"github.com/unqnown/esctl/internal/vacuum"
 	"github.com/unqnown/esctl/pkg/check"
+	"github.com/unqnown/semver"
 	"github.com/urfave/cli"
 )
 
-func Run() error {
+func Run(ver string) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -33,7 +35,7 @@ func Run() error {
 	app := cli.NewApp()
 
 	app.Name = "esctl"
-	app.Version = "v0.1.0"
+	app.Version = ver
 	app.Usage = "Elasticsearch cluster managing tool."
 	app.Description = "To start using esctl immediately run `esctl init`."
 	app.UseShortOptionHandling = true
@@ -77,6 +79,7 @@ func Run() error {
 		open.Command,
 		close.Command,
 		reroute.Command,
+		refresh.Command,
 	}
 
 	return app.Run(os.Args)
@@ -101,7 +104,10 @@ func _init(ctx *cli.Context) {
 	err := os.MkdirAll(dir, os.ModePerm)
 	check.Fatal(err)
 
-	conf := app.Default(dir)
+	ver, err := semver.Parse(ctx.App.Version)
+	check.Fatal(err)
+
+	conf := app.NewConfig(ver, dir)
 
 	err = conf.Save(path)
 	check.Fatalf(err, "init config: %v", err)

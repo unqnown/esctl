@@ -7,7 +7,7 @@ import (
 
 	"github.com/olivere/elastic/v7"
 	"github.com/unqnown/esctl/internal/app"
-	"github.com/unqnown/esctl/pkg/dump"
+	"github.com/unqnown/esctl/pkg/backup"
 )
 
 type Client struct {
@@ -23,6 +23,7 @@ func New(cluster app.Cluster, usr app.User, opts ...elastic.ClientOptionFunc) (*
 	if err != nil {
 		return nil, err
 	}
+
 	return &Client{Client: cli}, nil
 }
 
@@ -37,6 +38,7 @@ func NewBulker(cli *elastic.Client) (*Bulker, error) {
 		After(func(execID int64, req []elastic.BulkableRequest, rsp *elastic.BulkResponse, err error) {
 			if err != nil {
 				log.Printf("bulk processing: executing [%d]: %v", execID, err)
+
 				return
 			}
 		}).
@@ -49,6 +51,7 @@ func NewBulker(cli *elastic.Client) (*Bulker, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &Bulker{BulkProcessor: processor}, nil
 }
 
@@ -67,13 +70,13 @@ func (b *Bulker) rm(index string, id string) {
 	)
 }
 
-func (b *Bulker) Save(docs ...dump.Doc) {
+func (b *Bulker) Save(docs ...backup.Document) {
 	for _, doc := range docs {
 		b.save(doc)
 	}
 }
 
-func (b *Bulker) save(doc dump.Doc) {
+func (b *Bulker) save(doc backup.Document) {
 	b.Add(
 		elastic.NewBulkIndexRequest().
 			Index(doc.Index).

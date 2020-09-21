@@ -2,19 +2,22 @@ package dump
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/olivere/elastic/v7"
 	"github.com/unqnown/esctl/internal/app"
+	"github.com/unqnown/esctl/pkg/backup"
 	"github.com/unqnown/esctl/pkg/bar"
 	"github.com/unqnown/esctl/pkg/check"
 	"github.com/unqnown/esctl/pkg/client"
 	"github.com/unqnown/esctl/pkg/ctl"
-	"github.com/unqnown/esctl/pkg/dump"
 	"github.com/urfave/cli"
 )
 
@@ -24,7 +27,7 @@ var Command = cli.Command{
 	Usage:                  "Exports index content.",
 	Description:            `If no indices specified all indices will be exported.`,
 	ArgsUsage:              "[indices...] --dump path/to/dump.json [--lpr 1000] [--query path/to/query.json]",
-	Action:                 ctl.NewAction(_dump),
+	Action:                 ctl.NewAction(dump),
 	Category:               "Intermediate",
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
@@ -41,10 +44,14 @@ var Command = cli.Command{
 			Name:  "query, q",
 			Usage: "Query `FILE`",
 		},
+		cli.BoolFlag{
+			Name:  "plain, p",
+			Usage: "Dump in plain json",
+		},
 	},
 }
 
-func _dump(conf app.Config, conn *client.Client, c *cli.Context) error {
+func dump(conf app.Config, conn *client.Client, c *cli.Context) error {
 	scroll := conn.Scroll(c.Args()...).Size(c.Int("lpr")).
 		FetchSource(true)
 
@@ -59,40 +66,40 @@ func _dump(conf app.Config, conn *client.Client, c *cli.Context) error {
 		file = filepath.Join(conf.Workdir, app.BackupDir, fmt.Sprintf("%s.json", time.Now().Format("2006-01-02T15:04:05")))
 	}
 
-	w, err := dump.NewFileWriter(file)
+	f, err := newDumpFile(file)
 	check.Fatalf(err, "create dump file: %v", err)
-	defer w.Close()
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	if !c.Bool("plain") {
+		enc.SetIndent("", "	")
+	}
 
 	dumping, wait := bar.Docs(0, "dumping")
 
 	started := time.Now()
 
-read:
 	for {
 		rsp, err := scroll.Do(context.Background())
-		switch err {
-		case nil:
-			// go ahead
-		case io.EOF:
-			break read
-		default:
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
 			check.Fatalf(err, "scroll: %v", err)
 		}
 
 		dumping.SetTotal(rsp.TotalHits(), false)
 
-		size := len(rsp.Hits.Hits)
-		docs := make([]dump.Doc, size)
-		for i, hit := range rsp.Hits.Hits {
-			docs[i].ID = hit.Id
-			docs[i].Index = hit.Index
-			docs[i].Body = hit.Source
+		for _, hit := range rsp.Hits.Hits {
+			err = enc.Encode(backup.Document{
+				ID:    hit.Id,
+				Index: hit.Index,
+				Body:  hit.Source,
+			})
+			check.Fatalf(err, "write dump page: %v", err)
+
+			dumping.IncrBy(1, time.Since(started))
 		}
-
-		_, err = w.Write(docs...)
-		check.Fatalf(err, "write dump page: %v", err)
-
-		dumping.IncrBy(size, time.Since(started))
 	}
 
 	wait()
@@ -105,5 +112,15 @@ func openQuery(path string) (elastic.Query, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return elastic.NewRawStringQuery(string(data)), nil
+}
+
+func newDumpFile(path string) (*os.File, error) {
+	dir, _ := filepath.Split(path)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return nil, err
+	}
+
+	return os.Create(path)
 }

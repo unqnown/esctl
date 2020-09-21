@@ -51,7 +51,7 @@ func alias(_ app.Config, conn *client.Client, c *cli.Context) error {
 	} else {
 		for _, index := range c.Args() {
 			alias.Add(index, a)
-			fmt.Fprintf(&w, "index %q aliased %q\n", index, a)
+			fmt.Fprintf(&w, "index %q aliased as %q\n", index, a)
 		}
 	}
 

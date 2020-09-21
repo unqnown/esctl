@@ -50,6 +50,7 @@ func reindex(_ app.Config, conn *client.Client, c *cli.Context) error {
 			WaitForCompletion(false).
 			Do(context.Background())
 		check.Fatal(err)
+
 		return nil
 	}
 
@@ -79,6 +80,7 @@ func reindex(_ app.Config, conn *client.Client, c *cli.Context) error {
 				reindexed, _ := conn.CatCount().Index(dst).Do(context.Background())
 				if len(reindexed) == 0 {
 					reindexing.SetTotal(int64(prev), true)
+
 					break watch
 				}
 				reindexing.SetTotal(int64(reindexed[0].Count), true)

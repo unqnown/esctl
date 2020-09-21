@@ -7,10 +7,11 @@ import (
 	"github.com/unqnown/esctl/pkg/check"
 )
 
-func init() {
-	log.SetFlags(0)
-}
+// Version represents application version.
+var Version = "v0.1.0"
 
 func main() {
-	check.Fatal(cmd.Run())
+	log.SetFlags(0)
+
+	check.Fatal(cmd.Run(Version))
 }

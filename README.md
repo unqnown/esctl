@@ -36,6 +36,7 @@ Default configuration will be added to your `$HOME/.esctl` directory.
 You are able to override config location with `$ESCTLCONFIG` env variable.
 
 ```yaml
+version: v0.1.0
 workdir: ~/.esctl/
 clusters:
   localhost:

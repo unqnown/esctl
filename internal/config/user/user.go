@@ -44,6 +44,7 @@ func user(c *cli.Context) {
 
 	if usr.Nil {
 		log.Printf("no user")
+
 		return
 	}
 

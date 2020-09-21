@@ -64,6 +64,7 @@ func nodes(_ app.Config, conn *client.Client, c *cli.Context) error {
 
 	if len(cat.Nodes) == 0 {
 		log.Printf("no nodes")
+
 		return nil
 	}
 
@@ -107,13 +108,15 @@ func nodes(_ app.Config, conn *client.Client, c *cli.Context) error {
 	}
 	if t.NumLines() == 0 {
 		log.Printf("no such nodes")
-		return nil
 
+		return nil
 	}
 	t.Render()
 
 	return nil
 }
+
+const asc = "asc"
 
 func sortnode(nodes []*elastic.NodesStatsNode, sorting string) {
 	var by, dir string
@@ -128,20 +131,20 @@ func sortnode(nodes []*elastic.NodesStatsNode, sorting string) {
 
 	switch by {
 	case "name":
-		sort.Slice(nodes, func(i, j int) bool { return order(dir == "asc", nodes[i].Name < nodes[j].Name) })
+		sort.Slice(nodes, func(i, j int) bool { return order(dir == asc, nodes[i].Name < nodes[j].Name) })
 	case "cpu":
-		sort.Slice(nodes, func(i, j int) bool { return order(dir == "asc", nodes[i].OS.CPU.Percent < nodes[j].OS.CPU.Percent) })
+		sort.Slice(nodes, func(i, j int) bool { return order(dir == asc, nodes[i].OS.CPU.Percent < nodes[j].OS.CPU.Percent) })
 	case "mem":
 		sort.Slice(nodes, func(i, j int) bool {
-			return order(dir == "asc", nodes[i].OS.Mem.UsedInBytes < nodes[j].OS.Mem.UsedInBytes)
+			return order(dir == asc, nodes[i].OS.Mem.UsedInBytes < nodes[j].OS.Mem.UsedInBytes)
 		})
 	case "jvm":
 		sort.Slice(nodes, func(i, j int) bool {
-			return order(dir == "asc", nodes[i].JVM.Mem.HeapUsedInBytes < nodes[j].JVM.Mem.HeapUsedInBytes)
+			return order(dir == asc, nodes[i].JVM.Mem.HeapUsedInBytes < nodes[j].JVM.Mem.HeapUsedInBytes)
 		})
 	case "disk":
 		sort.Slice(nodes, func(i, j int) bool {
-			return order(dir == "asc", nodes[i].FS.Total.TotalInBytes-nodes[i].FS.Total.FreeInBytes < nodes[j].FS.Total.TotalInBytes-nodes[j].FS.Total.FreeInBytes)
+			return order(dir == asc, nodes[i].FS.Total.TotalInBytes-nodes[i].FS.Total.FreeInBytes < nodes[j].FS.Total.TotalInBytes-nodes[j].FS.Total.FreeInBytes)
 		})
 	}
 }
@@ -150,6 +153,7 @@ func order(asc bool, v bool) bool {
 	if asc {
 		return v
 	}
+
 	return !v
 }
 
@@ -162,6 +166,7 @@ func show(set map[string]bool, vs ...string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 

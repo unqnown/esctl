@@ -41,6 +41,7 @@ func document(_ app.Config, conn *client.Client, c *cli.Context) error {
 		switch {
 		case elastic.IsNotFound(err):
 			log.Printf("%q not found", id)
+
 			continue
 		default:
 			check.Fatal(err)

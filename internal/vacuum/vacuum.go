@@ -2,6 +2,7 @@ package vacuum
 
 import (
 	"context"
+	"errors"
 	"io"
 	"io/ioutil"
 	"log"
@@ -58,16 +59,14 @@ func vacuum(_ app.Config, conn *client.Client, c *cli.Context) error {
 	bulk, err := conn.Bulk()
 	check.Fatalf(err, "start bulk processor: %v", err)
 
-read:
 	for {
 		rsp, err := scroll.Do(context.Background())
-		switch err {
-		case nil:
-			// go ahead
-		case io.EOF:
-			vacuum.SetTotal(rsp.TotalHits(), true)
-			break read
-		default:
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				vacuum.SetTotal(rsp.TotalHits(), true)
+
+				break
+			}
 			check.Fatalf(err, "scroll: %v", err)
 		}
 
@@ -93,5 +92,6 @@ func openQuery(path string) (elastic.Query, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return elastic.NewRawStringQuery(string(data)), nil
 }

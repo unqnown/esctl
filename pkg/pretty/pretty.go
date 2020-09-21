@@ -6,6 +6,7 @@ import (
 
 func pretty(v interface{}) []byte {
 	pretty, _ := json.MarshalIndent(v, "", "	")
+
 	return pretty
 }
 

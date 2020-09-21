@@ -1,10 +1,18 @@
 package app
 
 import (
+	"errors"
+	"fmt"
 	"os"
 
 	"github.com/go-yaml/yaml"
-	"github.com/pkg/errors"
+	"github.com/unqnown/semver"
+)
+
+var (
+	ErrContextNotFound = errors.New("context: not found")
+	ErrClusterNotFound = errors.New("cluster: not found")
+	ErrUserNotFound    = errors.New("user: not found")
 )
 
 const (
@@ -13,8 +21,9 @@ const (
 	QueryDir   = ".query"
 )
 
-func Default(workd string) Config {
+func NewConfig(ver semver.Version, workd string) Config {
 	return Config{
+		Version: ver,
 		Workdir: workd,
 		Users:   map[string]User{},
 		Clusters: map[string]Cluster{
@@ -24,8 +33,7 @@ func Default(workd string) Config {
 		},
 		Contexts: map[string]Context{
 			"default": {
-				Cluster:  "localhost",
-				Location: "default",
+				Cluster: "localhost",
 			},
 		},
 		Context: "default",
@@ -35,6 +43,8 @@ func Default(workd string) Config {
 type Settings struct{}
 
 type Config struct {
+	Version semver.Version `yaml:"version"`
+
 	Workdir  string   `yaml:"workdir"`
 	Settings Settings `yaml:"settings,omitempty"`
 
@@ -51,9 +61,10 @@ func (conf *Config) SetContext(ctx string) error {
 		return nil
 	}
 	if _, exists := conf.Contexts[ctx]; !exists {
-		return errors.Errorf("context %q not found", ctx)
+		return fmt.Errorf("set %q context: %w", ctx, ErrContextNotFound)
 	}
 	conf.Context = ctx
+
 	return nil
 }
 
@@ -78,6 +89,7 @@ func (conf *Config) Validate() error {
 	if _, err := conf.Cluster(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -92,6 +104,7 @@ func (conf *Config) Open(path string) error {
 	if err := yaml.NewDecoder(f).Decode(conf); err != nil {
 		return err
 	}
+
 	return conf.Validate()
 }
 
@@ -104,14 +117,16 @@ func (conf Config) Save(path string) error {
 		return err
 	}
 	defer f.Close()
+
 	return yaml.NewEncoder(f).Encode(conf)
 }
 
 func (conf Config) Ctx() (Context, error) {
 	ctx, found := conf.Contexts[conf.Context]
 	if !found {
-		return Context{}, errors.Errorf("context %q not found", conf.Context)
+		return Context{}, fmt.Errorf("get %q context: %w", conf.Context, ErrContextNotFound)
 	}
+
 	return ctx, nil
 }
 
@@ -122,8 +137,9 @@ func (conf Config) Cluster() (Cluster, error) {
 	}
 	cst, found := conf.Clusters[ctx.Cluster]
 	if !found {
-		return Cluster{}, errors.Errorf("cluster %q not found", ctx.Cluster)
+		return Cluster{}, fmt.Errorf("get %q cluster: %w", ctx.Cluster, ErrClusterNotFound)
 	}
+
 	return cst, nil
 }
 
@@ -137,8 +153,9 @@ func (conf Config) User() (User, error) {
 	}
 	usr, found := conf.Users[*ctx.User]
 	if !found {
-		return User{}, errors.Errorf("user %q not found", *ctx.User)
+		return User{}, fmt.Errorf("get %q user: %w", *ctx.User, ErrUserNotFound)
 	}
+
 	return usr, nil
 }
 
@@ -149,13 +166,13 @@ func (conf Config) Conn() (cst Cluster, usr User, err error) {
 	if usr, err = conf.User(); err != nil {
 		return cst, usr, err
 	}
+
 	return cst, usr, nil
 }
 
 type Context struct {
-	User     *string `yaml:"user,omitempty"`
-	Cluster  string  `yaml:"cluster"`
-	Location string  `yaml:"location"`
+	User    *string `yaml:"user,omitempty"`
+	Cluster string  `yaml:"cluster"`
 }
 
 type Cluster struct {

@@ -79,6 +79,7 @@ func indices(_ app.Config, conn *client.Client, c *cli.Context) error {
 
 	if len(cat) == 0 {
 		log.Printf("no indices")
+
 		return nil
 	}
 

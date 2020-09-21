@@ -99,6 +99,7 @@ func nodes(_ app.Config, conn *client.Client, c *cli.Context) error {
 
 	if len(cat.Nodes) == 0 {
 		log.Printf("no nodes found")
+
 		return nil
 	}
 
@@ -131,6 +132,7 @@ func decodeRoles(rs []string) (s string) {
 	for _, r := range rs {
 		s += roles[r]
 	}
+
 	return s
 }
 
@@ -149,6 +151,7 @@ func shards(_ app.Config, conn *client.Client, c *cli.Context) error {
 
 	if len(cat) == 0 {
 		log.Printf("no shards found")
+
 		return nil
 	}
 
@@ -197,5 +200,6 @@ func show(set map[string]bool, vs ...string) bool {
 			return true
 		}
 	}
+
 	return false
 }
