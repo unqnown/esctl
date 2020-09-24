@@ -83,6 +83,8 @@ func dump(conf app.Config, conn *client.Client, c *cli.Context) error {
 		rsp, err := scroll.Do(context.Background())
 		if err != nil {
 			if errors.Is(err, io.EOF) {
+				dumping.SetTotal(0, true)
+
 				break
 			}
 			check.Fatalf(err, "scroll: %v", err)
