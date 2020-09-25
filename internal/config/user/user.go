@@ -17,6 +17,7 @@ var Command = cli.Command{
 	Usage:                  "Shows current user.",
 	Action:                 user,
 	UseShortOptionHandling: true,
+	Hidden:                 true,
 	Subcommands: []cli.Command{
 		{
 			Name:                   "add",
@@ -42,7 +43,7 @@ func user(c *cli.Context) {
 	usr, err := conf.User()
 	check.Fatal(err)
 
-	if usr.Nil {
+	if usr.Name == "" {
 		log.Printf("no user")
 
 		return

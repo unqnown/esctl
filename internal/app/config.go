@@ -149,7 +149,7 @@ func (conf Config) User() (User, error) {
 		return User{}, err
 	}
 	if ctx.User == nil {
-		return User{Nil: true}, nil
+		return User{}, nil
 	}
 	usr, found := conf.Users[*ctx.User]
 	if !found {
@@ -183,6 +183,4 @@ type Cluster struct {
 type User struct {
 	Name     string `yaml:"name"`
 	Password string `yaml:"password"`
-	// TODO(d.andriichuk): refactor user flow.
-	Nil bool `yaml:"-"`
 }

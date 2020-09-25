@@ -31,6 +31,7 @@ var Command = cli.Command{
 			ArgsUsage:              "context...",
 			Action:                 _delete,
 			UseShortOptionHandling: true,
+			Hidden:                 true,
 		},
 		{
 			Name:                   "add",
@@ -39,6 +40,7 @@ var Command = cli.Command{
 			ArgsUsage:              "context --user user --cluster cluster [-u]",
 			Action:                 add,
 			UseShortOptionHandling: true,
+			Hidden:                 true,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "use, u",

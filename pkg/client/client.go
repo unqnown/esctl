@@ -14,12 +14,11 @@ type Client struct {
 	*elastic.Client
 }
 
-func New(cluster app.Cluster, usr app.User, opts ...elastic.ClientOptionFunc) (*Client, error) {
-	apply := append(opts, elastic.SetURL(cluster.Servers...))
-	if !usr.Nil {
-		apply = append(apply, elastic.SetBasicAuth(usr.Name, usr.Password))
-	}
-	cli, err := elastic.NewSimpleClient(apply...)
+func New(cluster app.Cluster, usr app.User) (*Client, error) {
+	cli, err := elastic.NewSimpleClient(
+		elastic.SetURL(cluster.Servers...),
+		elastic.SetBasicAuth(usr.Name, usr.Password),
+	)
 	if err != nil {
 		return nil, err
 	}
