@@ -75,22 +75,28 @@ func dump(conf app.Config, conn *client.Client, c *cli.Context) error {
 		enc.SetIndent("", "	")
 	}
 
-	dumping, wait := bar.Docs(0, "dumping")
+	var (
+		estimated int64
+		processed int64
+	)
+	dumping, wait := bar.Docs(estimated, "dumping")
 
 	started := time.Now()
 
-	for {
-		rsp, err := scroll.Do(context.Background())
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				dumping.SetTotal(0, true)
+	rsp, err := scroll.Do(context.Background())
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			dumping.SetTotal(0, true)
+			wait()
 
-				break
-			}
-			check.Fatalf(err, "scroll: %v", err)
+			return nil
 		}
+		check.Fatalf(err, "scroll: %v", err)
+	}
+	estimated = rsp.TotalHits()
 
-		dumping.SetTotal(rsp.TotalHits(), false)
+	for {
+		dumping.SetTotal(max(estimated, processed+int64(len(rsp.Hits.Hits))), false)
 
 		for _, hit := range rsp.Hits.Hits {
 			err = enc.Encode(backup.Document{
@@ -99,14 +105,38 @@ func dump(conf app.Config, conn *client.Client, c *cli.Context) error {
 				Body:  hit.Source,
 			})
 			check.Fatalf(err, "write dump page: %v", err)
+			processed++
 
 			dumping.IncrBy(1, time.Since(started))
+		}
+
+		rsp, err = scroll.Do(context.Background())
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				dumping.SetTotal(max(estimated, processed), true)
+
+				break
+			}
+			check.Fatalf(err, "scroll: %v", err)
 		}
 	}
 
 	wait()
 
 	return nil
+}
+
+func max(vs ...int64) int64 {
+	if len(vs) == 0 {
+		return 0
+	}
+	max := vs[0]
+	for i := 1; i < len(vs); i++ {
+		if vs[i] > max {
+			max = vs[i]
+		}
+	}
+	return max
 }
 
 func openQuery(path string) (elastic.Query, error) {
