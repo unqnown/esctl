@@ -2,6 +2,7 @@ package reindex
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -26,17 +27,17 @@ var Command = cli.Command{
 		cli.StringFlag{
 			Name:     "source, src, s",
 			Required: true,
-			Usage:    "Source index name. Means remote index if `--remote` flag presented",
+			Usage:    "Source `index` name. Means remote index if --remote flag presented",
 		},
 		cli.StringFlag{
 			Name:     "destination, dst, d",
 			Required: true,
-			Usage:    "Destination index name in current context",
+			Usage:    "Destination `index` name in current context",
 		},
 		cli.StringFlag{
 			Name:     "remote, r",
 			Required: false,
-			Usage:    "Remote cluster context",
+			Usage:    "Remote cluster `context`",
 		},
 		cli.DurationFlag{
 			Name:     "connection_timeout",
@@ -50,6 +51,14 @@ var Command = cli.Command{
 			Usage:    "Socket timeout to connect with the remote cluster.",
 			Value:    1 * time.Minute,
 		},
+		cli.IntFlag{
+			Name:     "size",
+			Required: false,
+			Usage: "The number of documents to index per batch. " +
+				"Use when indexing from remote to ensure that the batches fit within the on-heap buffer, " +
+				"which defaults to a maximum size of 100 MB.",
+			Value: 1000,
+		},
 	},
 }
 
@@ -57,7 +66,9 @@ func reindex(conf app.Config, conn *client.Client, c *cli.Context) error {
 	sind := c.String("source")
 	dind := c.String("destination")
 
-	src := elastic.NewReindexSource().Index(sind)
+	src := elastic.NewReindexSource().
+		Request(elastic.NewSearchRequest().Size(c.Int("size"))).
+		Index(sind)
 
 	var total int64
 
@@ -82,8 +93,8 @@ func reindex(conf app.Config, conn *client.Client, c *cli.Context) error {
 				Host(rcluster.Servers[0]).
 				Username(ruser.Name).
 				Password(ruser.Password).
-				ConnectTimeout(c.Duration("connection_timeout").String()).
-				SocketTimeout(c.Duration("socket_timeout").String()),
+				ConnectTimeout(fmt.Sprintf("%0.fs", c.Duration("connection_timeout").Seconds())).
+				SocketTimeout(fmt.Sprintf("%0.fs", c.Duration("socket_timeout").Seconds())),
 		)
 
 		rconn, err := client.New(rcluster, ruser)
@@ -106,8 +117,14 @@ func reindex(conf app.Config, conn *client.Client, c *cli.Context) error {
 
 	done := make(chan struct{})
 
+	exists, err := conn.CatCount().Index(dind).Do(context.Background())
+	check.Fatal(err)
+
 	go func() {
 		var prev int
+		if len(exists) > 0 {
+			prev = exists[0].Count
+		}
 	watch:
 		for {
 			// TODO: index out of range
@@ -131,7 +148,7 @@ func reindex(conf app.Config, conn *client.Client, c *cli.Context) error {
 		}
 	}()
 
-	_, err := conn.Reindex().
+	_, err = conn.Reindex().
 		Source(src).
 		DestinationIndex(dind).
 		ProceedOnVersionConflict().

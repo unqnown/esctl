@@ -96,6 +96,7 @@ func replace(_ app.Config, conn *client.Client, c *cli.Context) error {
 		}()
 
 		_, err = conn.Reindex().
+			// TODO(d.andriichuk): refactor and add size
 			SourceIndex(index).
 			DestinationIndex(by).
 			ProceedOnVersionConflict().

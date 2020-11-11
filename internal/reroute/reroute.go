@@ -28,7 +28,10 @@ var Command = cli.Command{
 }
 
 func failed(_ app.Config, conn *client.Client, c *cli.Context) error {
-	_, err := conn.ClusterReroute().RetryFailed(true).Do(context.Background())
+	_, err := conn.ClusterReroute().
+		Body(struct{}{}). // incorrect internal validation bypass
+		RetryFailed(true).
+		Do(context.Background())
 	check.Fatal(err)
 
 	log.Printf("acknowledged")
